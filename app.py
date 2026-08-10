@@ -73,11 +73,14 @@ def verifier_acces() -> bool:
     st.caption(f"Release {APP_VERSION}")
     st.subheader("Accès réservé")
 
-    mot_de_passe = st.text_input(
-        "Veuillez entrer le mot de passe :",
-        type="password",
-        key="mot_de_passe",
-    )
+    champ_mot_de_passe, _ = st.columns([0.50, 0.50])
+
+    with champ_mot_de_passe:
+        mot_de_passe = st.text_input(
+            "Veuillez entrer le mot de passe :",
+            type="password",
+            key="mot_de_passe",
+        )
 
     if st.button("Accéder"):
         mot_de_passe_attendu = st.secrets.get("APP_PASSWORD", "")
