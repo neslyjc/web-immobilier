@@ -61,6 +61,48 @@ from analyse import (
 st.set_page_config(page_title=APP_NAME, layout="wide")
 
 # ============================================================
+# Protection par mot de passe — accès réservé
+# Le mot de passe est conservé dans Streamlit Secrets
+# sous la clé APP_PASSWORD. Il n'est jamais écrit dans le code.
+# ============================================================
+def verifier_acces() -> bool:
+    if st.session_state.get("authentifie", False):
+        return True
+
+    st.title(APP_NAME)
+    st.caption(f"Release {APP_VERSION}")
+    st.subheader("Accès réservé")
+
+    mot_de_passe = st.text_input(
+        "Veuillez entrer le mot de passe :",
+        type="password",
+        key="mot_de_passe",
+    )
+
+    if st.button("Accéder"):
+        mot_de_passe_attendu = st.secrets.get("APP_PASSWORD", "")
+
+        if not mot_de_passe_attendu:
+            st.error(
+                "Le mot de passe de l'application n'est pas encore configuré "
+                "dans Streamlit Secrets."
+            )
+            st.stop()
+
+        if mot_de_passe == mot_de_passe_attendu:
+            st.session_state["authentifie"] = True
+            st.rerun()
+        else:
+            st.error("Mot de passe incorrect.")
+
+    return False
+
+
+if not verifier_acces():
+    st.stop()
+
+
+# ============================================================
 # Style de présentation — Phase 1.2
 # ============================================================
 # La logique métier et les calculs restent inchangés.
@@ -203,19 +245,10 @@ div[data-testid="stSelectbox"] div[data-baseweb="select"] {
     font-weight: 700 !important;
 }
 
-/* Valeur du pourcentage de mise de fonds : bien visible et en gras.
-   Streamlit peut utiliser des identifiants DOM différents selon la version;
-   on couvre donc les variantes du conteneur de la valeur du curseur. */
-div[data-testid="stSlider"] [data-testid="stThumbValue"],
-div[data-testid="stSlider"] [data-testid="stThumbValue"] *,
-div[data-testid="stSlider"] [data-testid="stSliderThumbValue"],
-div[data-testid="stSlider"] [data-testid="stSliderThumbValue"] *,
-div[data-testid="stSlider"] [data-testid*="ThumbValue"],
-div[data-testid="stSlider"] [data-testid*="ThumbValue"] *,
-div[data-testid="stSlider"] [data-testid*="thumbValue"],
-div[data-testid="stSlider"] [data-testid*="thumbValue"] * {
+/* Valeur affichée par le curseur Mise de fonds */
+div[data-testid="stSlider"] [data-testid="stThumbValue"] {
     font-size: 1.05rem !important;
-    font-weight: 800 !important;
+    font-weight: 700 !important;
 }
 
 /* Texte des bornes du curseur */
@@ -230,7 +263,7 @@ div[data-testid="stSlider"] [data-testid="stTickBarMax"] {
 st.title(APP_NAME)
 st.caption(f"Release {APP_VERSION}")
 
-gauche, droite = st.columns([0.40, 1.60])
+gauche, droite = st.columns([0.58, 1.42])
 
 
 with gauche:
