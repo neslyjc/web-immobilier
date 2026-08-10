@@ -104,7 +104,6 @@ def verifier_acces() -> bool:
 if not verifier_acces():
     st.stop()
 
-
 # ============================================================
 # Style de présentation — Phase 1.2
 # ============================================================
@@ -248,9 +247,20 @@ div[data-testid="stSelectbox"] div[data-baseweb="select"] {
     font-weight: 700 !important;
 }
 
-/* Valeur affichée par le curseur Mise de fonds */
-div[data-testid="stSlider"] [data-testid="stThumbValue"] {
+/* Durée de l'hypothèque : valeur sélectionnée en rouge,
+   avec la même taille et le même poids visuel que les autres valeurs. */
+div[data-testid="stSelectbox"] [role="combobox"],
+div[data-testid="stSelectbox"] [role="combobox"] *,
+div[data-testid="stSelectbox"] [role="combobox"] span {
+    color: #ff4b4b !important;
     font-size: 1.05rem !important;
+    font-weight: 700 !important;
+    line-height: 1.25 !important;
+}
+
+/* Mise de fonds (%) : valeur rouge et en gras */
+div[data-testid="stNumberInput"]:has(input[aria-label="Mise de fonds (%)"]) input {
+    color: #ff4b4b !important;
     font-weight: 700 !important;
 }
 
@@ -278,6 +288,7 @@ with gauche:
         min_value=0.0,
         value=float(PRIX_ACHAT_DEFAUT),
         step=1000.0,
+        format="%.0f",
     )
     
     revenus_annuels = st.number_input(
@@ -285,14 +296,16 @@ with gauche:
         min_value=0.0,
         value=float(REVENUS_ANNUELS_DEFAUT),
         step=1000.0,
+        format="%.0f",
     )
     
-    mise_pct = st.slider(
+    mise_pct = st.number_input(
         "Mise de fonds (%)",
-        5.0,
-        100.0,
-        float(MISE_DE_FONDS_DEFAUT),
-        0.5,
+        min_value=5.0,
+        max_value=100.0,
+        value=float(MISE_DE_FONDS_DEFAUT),
+        step=0.25,
+        format="%.2f",
     )
 
     duree = st.selectbox(
@@ -315,6 +328,7 @@ with gauche:
         min_value=0.0,
         value=float(TAXES_MUNICIPALES_DEFAUT),
         step=100.0,
+        format="%.0f",
     )
   
 
@@ -323,6 +337,7 @@ with gauche:
         min_value=0.0,
         value=float(TAXES_SCOLAIRES_DEFAUT),
         step=50.0,
+        format="%.0f",
     )
   
     
@@ -331,6 +346,7 @@ with gauche:
         min_value=0.0,
         value=float(ASSURANCE_HABITATION_DEFAUT),
         step=25.0,
+        format="%.0f",
     )
         
     
@@ -339,6 +355,7 @@ with gauche:
         min_value=0.0,
         value=float(AUTRES_DEPENSES_MENSUELLES_DEFAUT),
         step=25.0,
+        format="%.0f",
     )
     
     
