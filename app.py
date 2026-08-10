@@ -1,0 +1,583 @@
+"""
+app.py
+Web Immobilier
+Release 1.2.0 (base)
+"""
+
+# ============================================================
+# Web Immobilier
+#
+# Mission
+# Transformer des données financières en informations utiles
+# pour prendre une meilleure décision d'investissement.
+# ============================================================
+
+
+import streamlit as st
+
+from config import (
+    APP_NAME,
+    APP_VERSION,
+    PRIX_ACHAT_DEFAUT,
+    MISE_DE_FONDS_DEFAUT,
+    TAUX_HYPOTHECAIRE_DEFAUT,
+    DUREE_HYPOTHEQUE_DEFAUT,
+    DUREES_HYPOTHEQUE,
+    REVENUS_ANNUELS_DEFAUT,  
+    TAXES_MUNICIPALES_DEFAUT,
+    TAXES_SCOLAIRES_DEFAUT,
+    ASSURANCE_HABITATION_DEFAUT,
+    AUTRES_DEPENSES_MENSUELLES_DEFAUT,
+)
+
+from calculs import (
+    calcul_mise_de_fonds,
+    calcul_montant_pret,
+    calcul_prime_schl,
+    calcul_versement_hypothecaire,
+    format_argent,
+)
+
+from revenus import (
+    calcul_revenus_mensuels,
+    calcul_revenus_annuels,
+)
+
+from depenses import (
+    calcul_taxes_annuelles,
+    calcul_assurance_annuelle,
+    calcul_depenses_mensuelles,
+)
+
+from analyse import (
+    calcul_cashflow_mensuel,
+    calcul_cashflow_annuel,
+    calcul_mrb,
+    calcul_verdict,
+    calcul_capital_rembourse_premiere_annee,
+)
+
+
+st.set_page_config(page_title=APP_NAME, layout="wide")
+
+# ============================================================
+# Style de présentation — Phase 1.2
+# ============================================================
+# La logique métier et les calculs restent inchangés.
+# Ce bloc agit uniquement sur la présentation des résultats.
+st.markdown("""
+<style>
+/* Réduire légèrement la largeur visuelle de la zone de saisie */
+section[data-testid="stSidebar"] {
+    width: 100%;
+}
+
+/* Titres des cartes de résultats */
+.resultat-titre {
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.25;
+    margin-bottom: 0.45rem;
+}
+
+/* Description principale : lisible et au moins aussi visible que le montant */
+.resultat-description {
+    font-size: 1.00rem;
+    font-weight: 700;
+    line-height: 1.25;
+    margin-bottom: 0.15rem;
+}
+
+/* Montant : plus gros et en gras */
+.resultat-valeur {
+    font-size: 1.45rem;
+    font-weight: 700;
+    line-height: 1.20;
+    margin-bottom: 0.20rem;
+}
+
+/* Commentaire secondaire : lisible, mais moins dominant */
+.resultat-commentaire {
+    font-size: 1.00rem;
+    font-weight: 500;
+    line-height: 1.30;
+    margin-top: 0.05rem;
+}
+
+/* Petit montant secondaire, par exemple la prime SCHL */
+.resultat-secondaire {
+    display: inline-block;
+    font-size: 0.82rem;
+    font-weight: 700;
+    margin-top: 0.20rem;
+    padding: 0.18rem 0.45rem;
+    border-radius: 0.35rem;
+    background: #d9f5df;
+}
+
+/* Carte individuelle */
+.resultat-carte {
+    padding: 0.55rem 0.15rem 0.65rem 0.15rem;
+    min-height: 5.2rem;
+}
+
+/* Évite que les longs libellés soient écrasés */
+.resultat-description-long {
+    max-width: 100%;
+}
+
+/* Verdict pleine largeur */
+.verdict-carte {
+    margin-top: 0.65rem;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid #d8d8d8;
+}
+
+.verdict-titre {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin-bottom: 0.15rem;
+}
+
+.verdict-valeur {
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.verdict-raison {
+    font-size: 0.88rem;
+    font-weight: 500;
+    line-height: 1.35;
+    margin-top: 0.55rem;
+}
+
+/* Réduire l'espace vertical inutile entre les éléments */
+div[data-testid="stVerticalBlock"] {
+    gap: 0.35rem;
+}
+
+/* Harmoniser la colonne de saisie #1 avec les colonnes de résultats */
+div[data-testid="stWidgetLabel"] p {
+    font-size: 1.00rem !important;
+    font-weight: 700 !important;
+    line-height: 1.25 !important;
+}
+
+/* Colonne #1 : libellés des champs en gras et lisibles.
+   Streamlit place le libellé à l'intérieur de chaque widget :
+   on cible donc directement les labels des widgets concernés. */
+div[data-testid="stNumberInput"] [data-testid="stWidgetLabel"] p,
+div[data-testid="stNumberInput"] [data-testid="stWidgetLabel"] *,
+div[data-testid="stSelectbox"] [data-testid="stWidgetLabel"] p,
+div[data-testid="stSelectbox"] [data-testid="stWidgetLabel"] *,
+div[data-testid="stSlider"] [data-testid="stWidgetLabel"] p,
+div[data-testid="stSlider"] [data-testid="stWidgetLabel"] * {
+    font-size: 1.00rem !important;
+    font-weight: 700 !important;
+    line-height: 1.25 !important;
+}
+
+/* Sécurité pour les variantes de structure DOM de Streamlit */
+div[data-testid="stNumberInput"] label,
+div[data-testid="stNumberInput"] label *,
+div[data-testid="stSelectbox"] label,
+div[data-testid="stSelectbox"] label *,
+div[data-testid="stSlider"] label,
+div[data-testid="stSlider"] label * {
+    font-weight: 700 !important;
+}
+
+/* Montants saisis : gras et légèrement plus visibles */
+div[data-testid="stNumberInput"] input,
+div[data-testid="stSelectbox"] div[data-baseweb="select"],
+div[data-testid="stSelectbox"] div[data-baseweb="select"] * {
+    font-size: 1.05rem !important;
+    font-weight: 700 !important;
+}
+
+/* Valeurs saisies : plus visibles, comme les données des résultats */
+div[data-testid="stNumberInput"] input,
+div[data-testid="stSelectbox"] div[data-baseweb="select"] {
+    font-size: 1.05rem !important;
+    font-weight: 700 !important;
+}
+
+/* Valeur du pourcentage de mise de fonds : bien visible et en gras.
+   Streamlit peut utiliser des identifiants DOM différents selon la version;
+   on couvre donc les variantes du conteneur de la valeur du curseur. */
+div[data-testid="stSlider"] [data-testid="stThumbValue"],
+div[data-testid="stSlider"] [data-testid="stThumbValue"] *,
+div[data-testid="stSlider"] [data-testid="stSliderThumbValue"],
+div[data-testid="stSlider"] [data-testid="stSliderThumbValue"] *,
+div[data-testid="stSlider"] [data-testid*="ThumbValue"],
+div[data-testid="stSlider"] [data-testid*="ThumbValue"] *,
+div[data-testid="stSlider"] [data-testid*="thumbValue"],
+div[data-testid="stSlider"] [data-testid*="thumbValue"] * {
+    font-size: 1.05rem !important;
+    font-weight: 800 !important;
+}
+
+/* Texte des bornes du curseur */
+div[data-testid="stSlider"] [data-testid="stTickBarMin"],
+div[data-testid="stSlider"] [data-testid="stTickBarMax"] {
+    font-size: 0.95rem !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+st.title(APP_NAME)
+st.caption(f"Release {APP_VERSION}")
+
+gauche, droite = st.columns([0.40, 1.60])
+
+
+with gauche:
+    
+    st.subheader("Financement")
+
+    prix_achat = st.number_input(
+        "Prix d'achat ($)",
+        min_value=0.0,
+        value=float(PRIX_ACHAT_DEFAUT),
+        step=1000.0,
+    )
+    
+    revenus_annuels = st.number_input(
+        "Revenus bruts annuels ($)",
+        min_value=0.0,
+        value=float(REVENUS_ANNUELS_DEFAUT),
+        step=1000.0,
+    )
+    
+    mise_pct = st.slider(
+        "Mise de fonds (%)",
+        5.0,
+        100.0,
+        float(MISE_DE_FONDS_DEFAUT),
+        0.5,
+    )
+
+    duree = st.selectbox(
+        "Durée de l'hypothèque (ans)",
+        DUREES_HYPOTHEQUE,
+        index=DUREES_HYPOTHEQUE.index(DUREE_HYPOTHEQUE_DEFAUT),
+    )
+
+       
+    taux = st.number_input(
+        "Taux hypothécaire (%)",
+        min_value=0.0,
+        value=float(TAUX_HYPOTHECAIRE_DEFAUT),
+        step=0.05,
+    )
+    
+    
+    taxes_municipales = st.number_input(
+        "Taxes municipales ($/année)",
+        min_value=0.0,
+        value=float(TAXES_MUNICIPALES_DEFAUT),
+        step=100.0,
+    )
+  
+
+    taxes_scolaires = st.number_input(
+        "Taxes scolaires ($/année)",
+        min_value=0.0,
+        value=float(TAXES_SCOLAIRES_DEFAUT),
+        step=50.0,
+    )
+  
+    
+    assurance = st.number_input(
+        "Assurance habitation ($/mois)",
+        min_value=0.0,
+        value=float(ASSURANCE_HABITATION_DEFAUT),
+        step=25.0,
+    )
+        
+    
+    autres_depenses_mensuelles = st.number_input(
+        "Autres dépenses ($/mois)",
+        min_value=0.0,
+        value=float(AUTRES_DEPENSES_MENSUELLES_DEFAUT),
+        step=25.0,
+    )
+    
+    
+mise = calcul_mise_de_fonds(prix_achat, mise_pct)
+
+pret = calcul_montant_pret(prix_achat, mise)
+
+revenus_mensuels = calcul_revenus_mensuels(
+    revenus_annuels
+)
+
+
+taxes_annuelles = calcul_taxes_annuelles(
+    taxes_municipales,
+    taxes_scolaires,
+)
+
+assurance_annuelle = calcul_assurance_annuelle(
+    assurance
+)
+
+depenses_mensuelles = calcul_depenses_mensuelles(
+    taxes_annuelles,
+    assurance_annuelle,
+    autres_depenses_mensuelles,
+)
+
+
+taux_schl, prime_schl, montant_finance = calcul_prime_schl(
+    pret,
+    mise_pct
+)
+
+paiement = calcul_versement_hypothecaire(
+    montant_finance,
+    taux,
+    duree
+)
+
+cashflow_mensuel = calcul_cashflow_mensuel(
+    revenus_mensuels,
+    paiement,
+    depenses_mensuelles,
+)
+
+
+cashflow_annuel = calcul_cashflow_annuel(
+    cashflow_mensuel
+)
+
+capital_annuel, capital_mensuel = (
+    calcul_capital_rembourse_premiere_annee(
+        montant_finance,
+        taux,
+        duree
+    )
+)
+
+
+mrb = calcul_mrb(
+    prix_achat,
+    revenus_annuels
+)
+
+
+verdict, raisons = calcul_verdict(
+    cashflow_mensuel
+)
+
+
+with droite:
+    st.subheader("Résultats")
+
+    # ==========================================================
+    # Fonction d'affichage des résultats
+    # ==========================================================
+    # Cette fonction ne modifie aucune donnée ni aucun calcul.
+    # Elle sert uniquement à uniformiser la typographie.
+    def afficher_resultat(
+        icone,
+        description,
+        valeur,
+        commentaire=None,
+        secondaire=None,
+        rouge=False,
+    ):
+        valeur_classe = "resultat-valeur"
+        valeur_style = ' style="color:#d62728;"' if rouge else ""
+
+        html = f"""
+        <div class="resultat-carte">
+            <div class="resultat-description">{icone} {description}</div>
+            <div class="{valeur_classe}"{valeur_style}>{valeur}</div>
+        """
+
+        if commentaire:
+            html += f'<div class="resultat-commentaire">{commentaire}</div>'
+
+        if secondaire:
+            html += f'<div class="resultat-secondaire">{secondaire}</div>'
+
+        html += "</div>"
+
+        st.markdown(html, unsafe_allow_html=True)
+
+    # ==========================================================
+    # Colonnes des résultats
+    # ==========================================================
+    col_financement, col_depenses, col_revenus, col_analyse = st.columns(4)
+
+    with col_financement:
+
+        st.markdown("### 🏦 Financement")
+
+        afficher_resultat(
+            "💰",
+            "Mise de fonds",
+            format_argent(mise),
+            "Apport personnel initial",
+        )
+
+        afficher_resultat(
+            "💵",
+            "Montant du prêt",
+            format_argent(pret),
+            "Montant emprunté auprès de la banque",
+        )
+
+        afficher_resultat(
+            "🏦",
+            "Prime SCHL",
+            f"{taux_schl:.2f} %",
+            "Assurance prêt hypothécaire",
+            f"+ {format_argent(prime_schl)}",
+        )
+
+        afficher_resultat(
+            "💳",
+            "Montant financé",
+            format_argent(montant_finance),
+            "Total du financement",
+        )
+
+    with col_depenses:
+
+        st.markdown("### 💸 Dépenses")
+
+        afficher_resultat(
+            "🏠",
+            "Paiement mensuel (hypothèque)",
+            format_argent(paiement),
+            "Paiement hypothécaire mensuel",
+        )
+
+        afficher_resultat(
+            "🏛️",
+            "Taxes annuelles",
+            format_argent(taxes_annuelles),
+            "Taxes municipales et scolaires",
+        )
+
+        afficher_resultat(
+            "🛡️",
+            "Assurance annuelle",
+            format_argent(assurance_annuelle),
+            "Assurance habitation annuelle",
+        )
+
+        afficher_resultat(
+            "💸",
+            "Dépenses mensuelles (hors hypothèque)",
+            format_argent(depenses_mensuelles),
+            "Autres dépenses mensuelles",
+        )
+
+    with col_revenus:
+
+        st.markdown("### 💰 Revenus")
+
+        afficher_resultat(
+            "📅",
+            "Revenus mensuels",
+            format_argent(revenus_mensuels),
+            "Revenus locatifs mensuels",
+        )
+
+        afficher_resultat(
+            "🏢",
+            "Revenus annuels",
+            format_argent(revenus_annuels),
+            "Revenus locatifs annuels",
+        )
+
+    with col_analyse:
+
+        st.markdown("### 📊 Analyse")
+
+        afficher_resultat(
+            "💵",
+            "Cash Flow mensuel",
+            format_argent(cashflow_mensuel),
+            "Flux de trésorerie mensuel",
+            rouge=cashflow_mensuel < 0,
+        )
+
+        afficher_resultat(
+            "📅",
+            "Cash Flow annuel",
+            format_argent(cashflow_annuel),
+            "Flux de trésorerie annuel",
+            rouge=cashflow_annuel < 0,
+        )
+
+        afficher_resultat(
+            "🏦",
+            "Capital remboursé (mensuel)",
+            format_argent(capital_mensuel),
+            "Capital remboursé chaque mois",
+        )
+
+        afficher_resultat(
+            "🏦",
+            "Capital remboursé (annuel)",
+            format_argent(capital_annuel),
+            "Capital remboursé chaque année",
+        )
+
+        afficher_resultat(
+            "📈",
+            "Multiplicateur de revenu brut (MRB)",
+            f"{mrb:.2f}",
+            "Multiplicateur de revenu brut",
+        )
+
+    # ==========================================================
+    # Conclusion — pleine largeur sous les quatre colonnes
+    # ==========================================================
+    # Présentation factuelle : on expose le niveau de cash flow
+    # sans porter de jugement sur la qualité de l'immeuble.
+    # On conserve les explications existantes et on remplace
+    # uniquement les formulations qui relèvent d'un jugement.
+    if cashflow_mensuel < -1000:
+        conclusion = "Risque financier"
+        couleur = "🔴"
+        raisons_affichage = list(raisons)
+        raisons_affichage[0] = "Cash Flow mensuel inférieur à -1 000 $."
+    elif cashflow_mensuel < 0:
+        conclusion = "À analyser"
+        couleur = "🟡"
+        raisons_affichage = list(raisons)
+        raisons_affichage[0] = (
+            "Cash Flow mensuel négatif, compris entre 0 $ et -1 000 $."
+        )
+    else:
+        conclusion = "Excellent"
+        couleur = "🟢"
+        raisons_affichage = list(raisons)
+
+    st.markdown('<div class="verdict-carte">', unsafe_allow_html=True)
+
+    st.markdown(
+        '<div class="verdict-titre">🟢 Conclusion</div>',
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        f'<div class="verdict-valeur">{couleur} {conclusion}</div>',
+        unsafe_allow_html=True,
+    )
+
+    for raison in raisons_affichage:
+        st.markdown(
+            f'<div class="verdict-raison">• {raison}</div>',
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
