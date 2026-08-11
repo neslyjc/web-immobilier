@@ -35,7 +35,7 @@ AUTRES_DEPENSES_MENSUELLES_DEFAUT = 500.0
 # REVENUS
 # ==========================================================
 
-REVENUS_ANNUELS_DEFAUT = 50000.0
+REVENUS_ANNUELS_DEFAUT = 45000.0
 
 
 # ==========================================================
