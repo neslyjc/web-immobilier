@@ -16,7 +16,7 @@ MISE_DE_FONDS_DEFAUT = 10.0
 
 TAUX_HYPOTHECAIRE_DEFAUT = 4.25
 
-DUREE_HYPOTHEQUE_DEFAUT = 30
+DUREE_HYPOTHEQUE_DEFAUT = 25
 
 # ==========================================================
 # DEPENSES
