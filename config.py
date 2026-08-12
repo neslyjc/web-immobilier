@@ -14,7 +14,7 @@ PRIX_ACHAT_DEFAUT = 1_000_000
 
 MISE_DE_FONDS_DEFAUT = 10.0
 
-TAUX_HYPOTHECAIRE_DEFAUT = 4.00
+TAUX_HYPOTHECAIRE_DEFAUT = 4.50
 
 DUREE_HYPOTHEQUE_DEFAUT = 25
 
@@ -35,7 +35,7 @@ AUTRES_DEPENSES_MENSUELLES_DEFAUT = 500.0
 # REVENUS
 # ==========================================================
 
-REVENUS_ANNUELS_DEFAUT = 60000.0
+REVENUS_ANNUELS_DEFAUT = 50000.0
 
 
 # ==========================================================
