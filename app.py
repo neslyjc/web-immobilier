@@ -85,8 +85,10 @@ def verifier_acces() -> bool:
         }
         /* Bouton Connexion : très visible et immédiatement identifiable */
         div[data-testid="stButton"] button {
-            font-size: 1.05rem !important;
+            font-size: 1.20rem !important;
             font-weight: 700 !important;
+            min-width: 125px !important;
+            padding: 0.45rem 1.20rem !important;
             background-color: #4A90E2 !important;
             color: white !important;
             border: 1px solid #4A90E2 !important;
