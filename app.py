@@ -83,9 +83,18 @@ def verifier_acces() -> bool:
             font-size: 1.05rem !important;
             font-weight: 700 !important;
         }
+        /* Bouton Connexion : très visible et immédiatement identifiable */
         div[data-testid="stButton"] button {
             font-size: 1.05rem !important;
             font-weight: 700 !important;
+            background-color: #4A90E2 !important;
+            color: white !important;
+            border: 1px solid #4A90E2 !important;
+        }
+        div[data-testid="stButton"] button:hover {
+            background-color: #357ABD !important;
+            color: white !important;
+            border-color: #357ABD !important;
         }
         </style>
         """,
@@ -99,7 +108,7 @@ def verifier_acces() -> bool:
             key="mot_de_passe",
         )
 
-    if st.button("Accéder"):
+    if st.button("Connexion"):
         mot_de_passe_attendu = st.secrets.get("APP_PASSWORD", "")
 
         if not mot_de_passe_attendu:
