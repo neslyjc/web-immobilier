@@ -75,6 +75,23 @@ def verifier_acces() -> bool:
 
     champ_mot_de_passe, _ = st.columns([0.50, 0.50])
 
+    st.markdown(
+        """
+        <style>
+        /* Page de connexion : texte du champ et bouton Accéder */
+        div[data-testid="stTextInput"] label p {
+            font-size: 1.05rem !important;
+            font-weight: 700 !important;
+        }
+        div[data-testid="stButton"] button {
+            font-size: 1.05rem !important;
+            font-weight: 700 !important;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
     with champ_mot_de_passe:
         mot_de_passe = st.text_input(
             "Veuillez entrer le mot de passe :",
