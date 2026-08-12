@@ -289,6 +289,32 @@ div[data-testid="stSlider"] [data-testid="stTickBarMin"],
 div[data-testid="stSlider"] [data-testid="stTickBarMax"] {
     font-size: 0.95rem !important;
 }
+
+/* ------------------------------------------------------------
+   Responsive mobile : conserver les lignes Montant | - | +
+   sur une seule ligne.
+   On cible uniquement les blocs à 3 colonnes qui contiennent
+   les boutons - / +, afin de ne pas modifier les autres
+   colonnes de l'application sur téléphone.
+   ------------------------------------------------------------ */
+@media (max-width: 640px) {
+    div[data-testid="stHorizontalBlock"]:has(> div:nth-child(3) div[data-testid="stButton"]) {
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: stretch !important;
+    }
+
+    div[data-testid="stHorizontalBlock"]:has(> div:nth-child(3) div[data-testid="stButton"]) > div:nth-child(1) {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+    }
+
+    div[data-testid="stHorizontalBlock"]:has(> div:nth-child(3) div[data-testid="stButton"]) > div:nth-child(2),
+    div[data-testid="stHorizontalBlock"]:has(> div:nth-child(3) div[data-testid="stButton"]) > div:nth-child(3) {
+        flex: 0 0 2.75rem !important;
+        min-width: 2.75rem !important;
+    }
+}
 </style>
 """, unsafe_allow_html=True)
 
