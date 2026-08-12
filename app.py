@@ -62,9 +62,9 @@ st.set_page_config(page_title=APP_NAME, layout="wide")
 
 # ============================================================
 # Protection par mot de passe — accès réservé
+# ============================================================
 # Le mot de passe est conservé dans Streamlit Secrets
 # sous la clé APP_PASSWORD. Il n'est jamais écrit dans le code.
-# ============================================================
 def verifier_acces() -> bool:
     if st.session_state.get("authentifie", False):
         return True
@@ -111,6 +111,20 @@ if not verifier_acces():
 # Ce bloc agit uniquement sur la présentation des résultats.
 st.markdown("""
 <style>
+/* Test esthétique — Prix d'achat uniquement */
+div[data-testid="stTextInput"] input {
+    font-size: 1.05rem !important;
+    font-weight: 700 !important;
+}
+
+/* Signes - / + : cibler directement le texte du bouton.
+   La taille du bouton lui-même reste inchangée. */
+div[data-testid="stButton"] button p,
+div[data-testid="stButton"] button span {
+    font-size: 1.25rem !important;
+    font-weight: 800 !important;
+    line-height: 1 !important;
+}
 /* Réduire légèrement la largeur visuelle de la zone de saisie */
 section[data-testid="stSidebar"] {
     width: 100%;
@@ -258,6 +272,12 @@ div[data-testid="stSelectbox"] [role="combobox"] span {
     line-height: 1.25 !important;
 }
 
+/* Taux hypothécaire (%) : valeur rouge et en gras */
+div[data-testid="stNumberInput"]:has(input[aria-label="Taux hypothécaire (%)"]) input {
+    color: #ff4b4b !important;
+    font-weight: 700 !important;
+}
+
 /* Mise de fonds (%) : valeur rouge et en gras */
 div[data-testid="stNumberInput"]:has(input[aria-label="Mise de fonds (%)"]) input {
     color: #ff4b4b !important;
@@ -273,30 +293,165 @@ div[data-testid="stSlider"] [data-testid="stTickBarMax"] {
 """, unsafe_allow_html=True)
 
 
-st.title(APP_NAME)
-st.caption(f"Release {APP_VERSION}")
+def deconnecter():
+    st.session_state["authentifie"] = False
+    st.session_state.pop("mot_de_passe", None)
+
+
+# En-tête : titre à gauche, Déconnexion à droite sur la même hauteur.
+header_left, header_right = st.columns([0.86, 0.14])
+
+with header_left:
+    st.title(APP_NAME)
+    st.caption(f"Release {APP_VERSION}")
+
+with header_right:
+    st.markdown("<div style='height:0.25rem;'></div>", unsafe_allow_html=True)
+    st.button(
+        "🔒 Déconnexion",
+        key="bouton_deconnexion",
+        on_click=deconnecter,
+        use_container_width=True,
+    )
 
 gauche, droite = st.columns([0.58, 1.42])
 
 
 with gauche:
-    
     st.subheader("Financement")
 
-    prix_achat = st.number_input(
-        "Prix d'achat ($)",
-        min_value=0.0,
-        value=float(PRIX_ACHAT_DEFAUT),
-        step=1000.0,
-        format="%.0f",
+    def champ_montant_avec_separateurs(label, default, step, key):
+        def formater():
+            valeur = st.session_state.get(key, "")
+            valeur = valeur.replace(" ", "").replace("\u00a0", "")
+            if valeur:
+                try:
+                    st.session_state[key] = f"{float(valeur):,.0f}".replace(",", " ")
+                except ValueError:
+                    pass
+
+        def valeur():
+            brut = st.session_state.get(key, "").replace(" ", "").replace("\u00a0", "")
+            try:
+                return int(float(brut))
+            except ValueError:
+                return 0
+
+        def moins():
+            st.session_state[key] = f"{max(0, valeur() - step):,}".replace(",", " ")
+
+        def plus():
+            st.session_state[key] = f"{valeur() + step:,}".replace(",", " ")
+
+        if key not in st.session_state:
+            st.session_state[key] = f"{int(default):,}".replace(",", " ")
+
+        st.markdown(
+            f'<div style="font-size:1.05rem;font-weight:700;line-height:1.25;'
+            f'margin-bottom:0.65rem;">{label}</div>',
+            unsafe_allow_html=True,
+        )
+
+        c_val, c_minus, c_plus = st.columns([0.86, 0.07, 0.07])
+
+        with c_val:
+            texte = st.text_input(
+                label,
+                key=key,
+                on_change=formater,
+                label_visibility="collapsed",
+            )
+
+        with c_minus:
+            st.button("−", key=f"{key}_moins", on_click=moins, use_container_width=True)
+
+        with c_plus:
+            st.button("+", key=f"{key}_plus", on_click=plus, use_container_width=True)
+
+        try:
+            return float(texte.replace(" ", "").replace("\u00a0", "") or 0)
+        except ValueError:
+            st.error(f"Veuillez entrer un montant valide pour « {label} ».")
+            return 0.0
+
+    # Test local : Prix d'achat en texte avec séparateur de milliers.
+    # Les boutons - / + modifient la valeur par tranches de 10 000 $,
+    # puis la valeur reste affichée avec les espaces de séparation.
+    def formater_prix_achat():
+        valeur = st.session_state.get("prix_achat_texte", "")
+        valeur_nettoyee = valeur.replace(" ", "").replace("\u00a0", "")
+        if not valeur_nettoyee:
+            return
+        try:
+            nombre = float(valeur_nettoyee)
+            st.session_state["prix_achat_texte"] = f"{nombre:,.0f}".replace(",", " ")
+        except ValueError:
+            pass
+
+    def valeur_prix_achat():
+        valeur = st.session_state.get("prix_achat_texte", "")
+        valeur = valeur.replace(" ", "").replace("\u00a0", "")
+        try:
+            return int(float(valeur))
+        except ValueError:
+            return 0
+
+    def prix_achat_moins():
+        valeur = max(0, valeur_prix_achat() - 10000)
+        st.session_state["prix_achat_texte"] = f"{valeur:,}".replace(",", " ")
+
+    def prix_achat_plus():
+        valeur = valeur_prix_achat() + 10000
+        st.session_state["prix_achat_texte"] = f"{valeur:,}".replace(",", " ")
+
+    if "prix_achat_texte" not in st.session_state:
+        st.session_state["prix_achat_texte"] = (
+            f"{int(PRIX_ACHAT_DEFAUT):,}".replace(",", " ")
+        )
+
+    # Libellé séparé pour aligner les boutons exactement sur la barre de saisie.
+    st.markdown(
+        '<div style="font-size:1.05rem;font-weight:700;line-height:1.25;'
+        'margin-bottom:0.65rem;">Prix d\'achat ($)</div>',
+        unsafe_allow_html=True,
     )
+
+    col_prix, col_moins, col_plus = st.columns([0.86, 0.07, 0.07])
+
+    with col_prix:
+        prix_achat_texte = st.text_input(
+            "Prix d'achat ($)",
+            key="prix_achat_texte",
+            on_change=formater_prix_achat,
+            label_visibility="collapsed",
+        )
+
+    with col_moins:
+        st.button(
+            "−",
+            key="prix_achat_moins",
+            on_click=prix_achat_moins,
+            use_container_width=True,
+        )
+
+    with col_plus:
+        st.button(
+            "+",
+            key="prix_achat_plus",
+            on_click=prix_achat_plus,
+            use_container_width=True,
+        )
+
+    try:
+        prix_achat = float(
+            prix_achat_texte.replace(" ", "").replace("\u00a0", "")
+        )
+    except ValueError:
+        prix_achat = 0.0
+        st.error("Veuillez entrer un montant valide.")
     
-    revenus_annuels = st.number_input(
-        "Revenus bruts annuels ($)",
-        min_value=0.0,
-        value=float(REVENUS_ANNUELS_DEFAUT),
-        step=1000.0,
-        format="%.0f",
+    revenus_annuels = champ_montant_avec_separateurs(
+        "Revenus bruts annuels ($)", REVENUS_ANNUELS_DEFAUT, 1000, "revenus_annuels_texte"
     )
     
     mise_pct = st.number_input(
@@ -323,39 +478,23 @@ with gauche:
     )
     
     
-    taxes_municipales = st.number_input(
-        "Taxes municipales ($/année)",
-        min_value=0.0,
-        value=float(TAXES_MUNICIPALES_DEFAUT),
-        step=100.0,
-        format="%.0f",
+    taxes_municipales = champ_montant_avec_separateurs(
+        "Taxes municipales ($/année)", TAXES_MUNICIPALES_DEFAUT, 100, "taxes_municipales_texte"
     )
   
 
-    taxes_scolaires = st.number_input(
-        "Taxes scolaires ($/année)",
-        min_value=0.0,
-        value=float(TAXES_SCOLAIRES_DEFAUT),
-        step=50.0,
-        format="%.0f",
+    taxes_scolaires = champ_montant_avec_separateurs(
+        "Taxes scolaires ($/année)", TAXES_SCOLAIRES_DEFAUT, 50, "taxes_scolaires_texte"
     )
   
     
-    assurance = st.number_input(
-        "Assurance habitation ($/mois)",
-        min_value=0.0,
-        value=float(ASSURANCE_HABITATION_DEFAUT),
-        step=25.0,
-        format="%.0f",
+    assurance = champ_montant_avec_separateurs(
+        "Assurance habitation ($/mois)", ASSURANCE_HABITATION_DEFAUT, 25, "assurance_texte"
     )
         
     
-    autres_depenses_mensuelles = st.number_input(
-        "Autres dépenses ($/mois)",
-        min_value=0.0,
-        value=float(AUTRES_DEPENSES_MENSUELLES_DEFAUT),
-        step=25.0,
-        format="%.0f",
+    autres_depenses_mensuelles = champ_montant_avec_separateurs(
+        "Autres dépenses ($/mois)", AUTRES_DEPENSES_MENSUELLES_DEFAUT, 25, "autres_depenses_texte"
     )
     
     
@@ -550,7 +689,6 @@ with droite:
         )
 
     with col_analyse:
-
         st.markdown("### 📊 Analyse")
 
         afficher_resultat(
