@@ -83,17 +83,25 @@ def verifier_acces() -> bool:
             font-size: 1.05rem !important;
             font-weight: 700 !important;
         }
-        /* Bouton Connexion : très visible et immédiatement identifiable */
-        div[data-testid="stButton"] button {
-            font-size: 1.20rem !important;
-            font-weight: 700 !important;
-            min-width: 125px !important;
-            padding: 0.45rem 1.20rem !important;
+        /* Bouton Connexion : ciblage exclusif */
+        div.st-key-connexion_button button {
+            width: 155px !important;
+            min-width: 155px !important;
+            max-width: 155px !important;
+            padding: 0.55rem 1.25rem !important;
             background-color: #4A90E2 !important;
             color: white !important;
             border: 1px solid #4A90E2 !important;
         }
-        div[data-testid="stButton"] button:hover {
+        div.st-key-connexion_button button p,
+        div.st-key-connexion_button button span,
+        div.st-key-connexion_button button div {
+            font-size: 1.30rem !important;
+            font-weight: 800 !important;
+            line-height: 1.1 !important;
+            color: white !important;
+        }
+        div.st-key-connexion_button button:hover {
             background-color: #357ABD !important;
             color: white !important;
             border-color: #357ABD !important;
@@ -110,21 +118,22 @@ def verifier_acces() -> bool:
             key="mot_de_passe",
         )
 
-    if st.button("Connexion"):
-        mot_de_passe_attendu = st.secrets.get("APP_PASSWORD", "")
+    with st.container(key="connexion_button"):
+        if st.button("Connexion"):
+            mot_de_passe_attendu = st.secrets.get("APP_PASSWORD", "")
 
-        if not mot_de_passe_attendu:
-            st.error(
-                "Le mot de passe de l'application n'est pas encore configuré "
-                "dans Streamlit Secrets."
-            )
-            st.stop()
+            if not mot_de_passe_attendu:
+                st.error(
+                    "Le mot de passe de l'application n'est pas encore configuré "
+                    "dans Streamlit Secrets."
+                )
+                st.stop()
 
-        if mot_de_passe == mot_de_passe_attendu:
-            st.session_state["authentifie"] = True
-            st.rerun()
-        else:
-            st.error("Mot de passe incorrect.")
+            if mot_de_passe == mot_de_passe_attendu:
+                st.session_state["authentifie"] = True
+                st.rerun()
+            else:
+                st.error("Mot de passe incorrect.")
 
     return False
 
