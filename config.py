@@ -10,7 +10,7 @@ APP_VERSION = "1.2.0"
 # ==========================================================
 # Valeurs par défaut
 
-PRIX_ACHAT_DEFAUT = 1_000_000
+PRIX_ACHAT_DEFAUT = 1_150_000
 
 MISE_DE_FONDS_DEFAUT = 10.0
 
@@ -35,7 +35,7 @@ AUTRES_DEPENSES_MENSUELLES_DEFAUT = 500.0
 # REVENUS
 # ==========================================================
 
-REVENUS_ANNUELS_DEFAUT = 50000.0
+REVENUS_ANNUELS_DEFAUT = 65000.0
 
 
 # ==========================================================
