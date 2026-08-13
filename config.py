@@ -4,6 +4,7 @@ Web Immobilier
 Release 1.2.0 (base)
 """
 
+
 APP_NAME = "🏢 Web Immobilier"
 APP_VERSION = "1.2.0"
 
