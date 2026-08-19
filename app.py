@@ -388,6 +388,7 @@ div[data-testid="stSlider"] [data-testid="stTickBarMax"] {
     }
 }
 
+
 </style>
 """, unsafe_allow_html=True)
 
