@@ -13,8 +13,6 @@ Release 1.2.0 (base)
 # ============================================================
 
 
-
-
 import streamlit as st
 
 from config import (
@@ -377,16 +375,15 @@ div[data-testid="stSlider"] [data-testid="stTickBarMax"] {
 @media (max-width: 768px) {
 
     div[data-testid="stHorizontalBlock"]:has(div[data-testid="stCheckbox"]) {
-        display: flex !important;
-        flex-direction: column !important;
-        flex-wrap: nowrap !important;
+        display: block !important;
         width: 100% !important;
     }
 
     div[data-testid="stHorizontalBlock"]:has(div[data-testid="stCheckbox"]) > div {
+        display: block !important;
         width: 100% !important;
         max-width: 100% !important;
-        flex: 0 0 auto !important;
+        flex: none !important;
     }
 }
 
