@@ -372,8 +372,19 @@ div[data-testid="stSlider"] [data-testid="stTickBarMax"] {
 }
 
 /* Présentation mobile de l'en-tête */
-div[data-testid="stHorizontalBlock"]:has(div[data-testid="stCheckbox"]) {
-    flex-wrap: wrap !important;
+@media (max-width: 768px) {
+
+    div[data-testid="stHorizontalBlock"]:has(div[data-testid="stCheckbox"]) {
+        flex-wrap: wrap !important;
+    }
+
+    div[data-testid="stHorizontalBlock"]:has(div[data-testid="stCheckbox"]) > div:nth-child(1),
+    div[data-testid="stHorizontalBlock"]:has(div[data-testid="stCheckbox"]) > div:nth-child(2),
+    div[data-testid="stHorizontalBlock"]:has(div[data-testid="stCheckbox"]) > div:nth-child(3) {
+        flex: 0 0 100% !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
 }
 
 </style>
