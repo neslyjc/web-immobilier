@@ -82,6 +82,14 @@ def verifier_acces() -> bool:
             font-size: 1.05rem !important;
             font-weight: 700 !important;
         }
+        
+        /* Texte saisi dans le champ mot de passe */
+        div[data-testid="stTextInput"] input {
+            font-size: 1.25rem !important;
+            font-weight: 700 !important;
+        }
+        
+        
         /* Bouton Connexion : ciblage exclusif */
         div.st-key-connexion_button button {
             width: 155px !important;
