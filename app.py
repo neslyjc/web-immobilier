@@ -137,9 +137,10 @@ def verifier_acces() -> bool:
     return False
 
 
-# Protection par mot de passe activée pour la mise en ligne.
-if not verifier_acces():
-    st.stop()
+# TEST LOCAL : protection par mot de passe temporairement désactivée.
+# Réactiver ces lignes avant la mise en ligne :
+# if not verifier_acces():
+#     st.stop()
 
 # ============================================================
 # Style de présentation — Phase 1.2
@@ -855,11 +856,11 @@ with droite:
         unsafe_allow_html=True,
     )
     st.markdown(
-        f'<div class="verdict-valeur" style="color:#d62728;">Cash Flow mensuel : {format_argent(cashflow_mensuel)}</div>',
+        f'<div class="verdict-valeur">Cash Flow mensuel : <span style="color:#d62728;">{format_argent(cashflow_mensuel)}</span></div>',
         unsafe_allow_html=True,
     )
     st.markdown(
-        f'<div class="verdict-valeur" style="color:#d62728;">Cash Flow annuel     : {format_argent(cashflow_annuel)}</div>', 
+        f'<div class="verdict-valeur">Cash Flow annuel     : <span style="color:#d62728;">{format_argent(cashflow_annuel)}</span></div>',
         unsafe_allow_html=True,
     )
     st.markdown('</div>', unsafe_allow_html=True)
