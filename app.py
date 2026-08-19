@@ -375,15 +375,16 @@ div[data-testid="stSlider"] [data-testid="stTickBarMax"] {
 @media (max-width: 768px) {
 
     div[data-testid="stHorizontalBlock"]:has(div[data-testid="stCheckbox"]) {
-        flex-wrap: wrap !important;
+        display: flex !important;
+        flex-direction: column !important;
+        flex-wrap: nowrap !important;
+        width: 100% !important;
     }
 
-    div[data-testid="stHorizontalBlock"]:has(div[data-testid="stCheckbox"]) > div:nth-child(1),
-    div[data-testid="stHorizontalBlock"]:has(div[data-testid="stCheckbox"]) > div:nth-child(2),
-    div[data-testid="stHorizontalBlock"]:has(div[data-testid="stCheckbox"]) > div:nth-child(3) {
-        flex: 0 0 100% !important;
+    div[data-testid="stHorizontalBlock"]:has(div[data-testid="stCheckbox"]) > div {
         width: 100% !important;
         max-width: 100% !important;
+        flex: 0 0 auto !important;
     }
 }
 
