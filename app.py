@@ -53,7 +53,6 @@ from analyse import (
     calcul_cashflow_mensuel,
     calcul_cashflow_annuel,
     calcul_mrb,
-    calcul_verdict,
     calcul_capital_rembourse_premiere_annee,
 )
 
@@ -138,6 +137,7 @@ def verifier_acces() -> bool:
     return False
 
 
+# Protection par mot de passe activée pour la mise en ligne.
 if not verifier_acces():
     st.stop()
 
@@ -202,7 +202,7 @@ section[data-testid="stSidebar"] {
 /* Petit montant secondaire, par exemple la prime SCHL */
 .resultat-secondaire {
     display: inline-block;
-    font-size: 0.82rem;
+    font-size: 1.230rem;
     font-weight: 700;
     margin-top: 0.20rem;
     padding: 0.18rem 0.45rem;
@@ -257,6 +257,12 @@ div[data-testid="stWidgetLabel"] p {
     font-size: 1.00rem !important;
     font-weight: 700 !important;
     line-height: 1.25 !important;
+}
+
+/* Options générales : cases à cocher visibles et lisibles. */
+div[data-testid="stCheckbox"] label p {
+    font-size: 1.00rem !important;
+    font-weight: 700 !important;
 }
 
 /* Colonne #1 : libellés des champs en gras et lisibles.
@@ -361,12 +367,53 @@ def deconnecter():
     st.session_state.pop("mot_de_passe", None)
 
 
-# En-tête : titre à gauche, Déconnexion à droite sur la même hauteur.
-header_left, header_right = st.columns([0.86, 0.14])
+def formater_revenu_sauvegarde(valeur):
+    try:
+        return f"{int(float(valeur)):,.0f}".replace(",", " ")
+    except (TypeError, ValueError):
+        return f"{int(REVENUS_ANNUELS_DEFAUT):,}".replace(",", " ")
+
+
+def basculer_immeuble_revenu():
+    actif = st.session_state.get("immeuble_a_revenu", True)
+    if actif:
+        valeur_sauvegardee = st.session_state.get(
+            "revenus_annuels_avant_zero", REVENUS_ANNUELS_DEFAUT
+        )
+        st.session_state["revenus_annuels_texte"] = formater_revenu_sauvegarde(
+            valeur_sauvegardee
+        )
+    else:
+        valeur = st.session_state.get("revenus_annuels_texte", "")
+        valeur = valeur.replace(" ", "").replace("\u00a0", "")
+        try:
+            valeur = float(valeur)
+            if valeur > 0:
+                st.session_state["revenus_annuels_avant_zero"] = valeur
+        except ValueError:
+            pass
+        st.session_state["revenus_annuels_texte"] = "0"
+
+
+# En-tête : titre à gauche, options au centre, Déconnexion à droite.
+header_left, header_options, header_right = st.columns([0.30, 0.50, 0.20])
 
 with header_left:
     st.title(APP_NAME)
     st.caption(f"Release {APP_VERSION}")
+
+with header_options:
+    st.checkbox(
+        "Immeuble à Revenu",
+        value=True,
+        key="immeuble_a_revenu",
+        on_change=basculer_immeuble_revenu,
+    )
+    st.checkbox(
+        "Prime SCHL",
+        value=True,
+        key="prime_schl_active",
+    )
 
 with header_right:
     st.markdown("<div style='height:0.25rem;'></div>", unsafe_allow_html=True)
@@ -376,6 +423,7 @@ with header_right:
         on_click=deconnecter,
         use_container_width=True,
     )
+
 
 gauche, droite = st.columns([0.58, 1.42])
 
@@ -513,9 +561,15 @@ with gauche:
         prix_achat = 0.0
         st.error("Veuillez entrer un montant valide.")
     
+    if not st.session_state.get("immeuble_a_revenu", True):
+        st.session_state["revenus_annuels_texte"] = "0"
+
     revenus_annuels = champ_montant_avec_separateurs(
         "Revenus bruts annuels ($)", REVENUS_ANNUELS_DEFAUT, 1000, "revenus_annuels_texte"
     )
+
+    if not st.session_state.get("immeuble_a_revenu", True):
+        revenus_annuels = 0.0
     
     mise_pct = st.number_input(
         "Mise de fonds (%)",
@@ -586,10 +640,19 @@ depenses_mensuelles = calcul_depenses_mensuelles(
 )
 
 
-taux_schl, prime_schl, montant_finance = calcul_prime_schl(
+taux_schl_calcule, prime_schl_calcule, montant_finance_calcule = calcul_prime_schl(
     pret,
     mise_pct
 )
+
+if st.session_state.get("prime_schl_active", True):
+    taux_schl = taux_schl_calcule
+    prime_schl = prime_schl_calcule
+    montant_finance = montant_finance_calcule
+else:
+    taux_schl = 0.0
+    prime_schl = 0.0
+    montant_finance = pret
 
 paiement = calcul_versement_hypothecaire(
     montant_finance,
@@ -617,15 +680,7 @@ capital_annuel, capital_mensuel = (
 )
 
 
-mrb = calcul_mrb(
-    prix_achat,
-    revenus_annuels
-)
-
-
-verdict, raisons = calcul_verdict(
-    cashflow_mensuel
-)
+mrb = calcul_mrb(prix_achat, revenus_annuels) if revenus_annuels > 0 else None
 
 
 with droite:
@@ -787,51 +842,25 @@ with droite:
         afficher_resultat(
             "📈",
             "Multiplicateur de revenu brut (MRB)",
-            f"{mrb:.2f}",
+            f"{mrb:.2f}" if mrb is not None else "N/A",
             "Multiplicateur de revenu brut",
         )
 
     # ==========================================================
-    # Conclusion — pleine largeur sous les quatre colonnes
+    # Conclusion — données de cash flow uniquement
     # ==========================================================
-    # Présentation factuelle : on expose le niveau de cash flow
-    # sans porter de jugement sur la qualité de l'immeuble.
-    # On conserve les explications existantes et on remplace
-    # uniquement les formulations qui relèvent d'un jugement.
-    if cashflow_mensuel < -1000:
-        conclusion = "Risque financier"
-        couleur = "🔴"
-        raisons_affichage = list(raisons)
-        raisons_affichage[0] = "Cash Flow mensuel inférieur à -1 000 $."
-    elif cashflow_mensuel < 0:
-        conclusion = "À analyser"
-        couleur = "🟡"
-        raisons_affichage = list(raisons)
-        raisons_affichage[0] = (
-            "Cash Flow mensuel négatif, compris entre 0 $ et -1 000 $."
-        )
-    else:
-        conclusion = "Excellent"
-        couleur = "🟢"
-        raisons_affichage = list(raisons)
-
     st.markdown('<div class="verdict-carte">', unsafe_allow_html=True)
-
     st.markdown(
-        '<div class="verdict-titre">🟢 Conclusion</div>',
+        '<div class="verdict-titre">📊 Conclusion</div>',
         unsafe_allow_html=True,
     )
-
     st.markdown(
-        f'<div class="verdict-valeur">{couleur} {conclusion}</div>',
+        f'<div class="verdict-valeur" style="color:#d62728;">Cash Flow mensuel : {format_argent(cashflow_mensuel)}</div>',
         unsafe_allow_html=True,
     )
-
-    for raison in raisons_affichage:
-        st.markdown(
-            f'<div class="verdict-raison">• {raison}</div>',
-            unsafe_allow_html=True,
-        )
-
-    st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="verdict-valeur" style="color:#d62728;">Cash Flow annuel     : {format_argent(cashflow_annuel)}</div>', 
+        unsafe_allow_html=True,
+    )
+    st.markdown('</div>', unsafe_allow_html=True)
 
