@@ -146,6 +146,7 @@ if not verifier_acces():
 # ============================================================
 # La logique métier et les calculs restent inchangés.
 # Ce bloc agit uniquement sur la présentation des résultats.
+
 st.markdown("""
 <style>
 /* Test esthétique — Prix d'achat uniquement */
@@ -358,6 +359,18 @@ div[data-testid="stSlider"] [data-testid="stTickBarMax"] {
         min-width: 2.75rem !important;
     }
 }
+
+/* Affichage mobile : garder les textes horizontaux */
+@media (max-width: 768px) {
+    div[data-testid="stCheckbox"] label p {
+        white-space: nowrap !important;
+    }
+
+    div[data-testid="stButton"] button {
+        white-space: nowrap !important;
+    }
+}
+
 </style>
 """, unsafe_allow_html=True)
 
