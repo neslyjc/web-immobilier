@@ -137,10 +137,9 @@ def verifier_acces() -> bool:
     return False
 
 
-# TEST LOCAL : protection par mot de passe temporairement désactivée.
-# Réactiver ces lignes avant la mise en ligne :
-# if not verifier_acces():
-#     st.stop()
+# Protection par mot de passe activée pour la mise en ligne.
+if not verifier_acces():
+    st.stop()
 
 # ============================================================
 # Style de présentation — Phase 1.2
