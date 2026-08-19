@@ -371,6 +371,11 @@ div[data-testid="stSlider"] [data-testid="stTickBarMax"] {
     }
 }
 
+/* Présentation mobile de l'en-tête */
+div[data-testid="stHorizontalBlock"]:has(div[data-testid="stCheckbox"]) {
+    flex-wrap: wrap !important;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
